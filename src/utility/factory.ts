@@ -25,6 +25,8 @@ export namespace f {
   type NodeArray<T extends ts.Node> = ReadonlyArray<T> | ts.NodeArray<T>;
   type ONodeArray<T extends ts.Node> = NodeArray<T> | undefined;
   export type ConvertableExpression = string | number | ts.Expression | Array<ConvertableExpression> | boolean;
+  export type ValidFoldedLiteral = ts.BooleanLiteral | ts.NumericLiteral | ts.StringLiteral;
+
   export function toExpression(
     expression: ConvertableExpression,
     stringFn: (param: string) => ts.Expression = string,
@@ -62,14 +64,21 @@ export namespace f {
       : factory.createNumericLiteral(value, flags);
   }
 
-  export function identifier(name: string, unique = false) {
+  export function identifier(name: string, unique = false): ts.Identifier {
     return unique
       ? factory.createUniqueName(name, ts.GeneratedIdentifierFlags.Optimistic)
       : factory.createIdentifier(name);
   }
 
-  export function nil() {
+  export function nil(): ts.Identifier {
     return identifier("undefined");
+  }
+
+  export function literalIntoString(literal: ValidFoldedLiteral): string {
+    if (is.bool(literal))
+      return literal.kind === ts.SyntaxKind.TrueKeyword ? "true" : "false";
+
+    return literal.text;
   }
 
   export function field(
@@ -451,7 +460,7 @@ export namespace f {
     }
 
     export function bool(node?: ts.Node): node is ts.BooleanLiteral {
-      return node !== undefined && (node === f.bool(true) || node === f.bool(false));
+      return node !== undefined && (node.kind === ts.SyntaxKind.TrueKeyword || node.kind === ts.SyntaxKind.FalseKeyword);
     }
 
     export function array(node?: ts.Node): node is ts.ArrayLiteralExpression {

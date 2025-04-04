@@ -8,7 +8,7 @@ import { TransformState, type TransformerConfig } from "./classes/transformState
  * This provides access to necessary resources and the user specified configuration.
  */
 export default function (program: ts.Program, config: TransformerConfig) {
-  return (transformationContext: ts.TransformationContext): ((file: ts.SourceFile) => ts.Node) => {
+  return (transformationContext: ts.TransformationContext): ((file: ts.SourceFile) => ts.SourceFile) => {
     const state = new TransformState(program, transformationContext, config);
     return file => transformFile(state, file);
   };

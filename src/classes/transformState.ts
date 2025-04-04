@@ -6,7 +6,7 @@ import { transformNode } from "../transformations/transformNode";
  * This is the transformer's configuration, the values are passed from the tsconfig.
  */
 export interface TransformerConfig {
-  _: void;
+
 }
 
 export class TransformState {
@@ -24,6 +24,6 @@ export class TransformState {
    * Transforms the children of the specified node.
    */
   public transformChildren<T extends ts.Node>(node: T): T {
-    return ts.visitEachChild(node, node => transformNode(this, node), this.context);
+    return ts.visitEachChild(node, newNode => transformNode(this, newNode), this.context);
   }
 }
