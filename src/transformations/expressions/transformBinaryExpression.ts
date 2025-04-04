@@ -16,14 +16,10 @@ const ARITHMETIC_OPERATIONS = new Map<ts.SyntaxKind, (a: number, b: number) => n
   [ts.SyntaxKind.AmpersandToken, (a, b) => a & b]
 ]);
 
-function isValidLiteral(node: ts.Expression): node is f.ValidFoldedLiteral {
-  return ts.isLiteralExpression(node) || f.is.bool(node);
-}
-
 export function transformBinaryExpression(state: TransformState, node: ts.BinaryExpression): ts.Expression {
   const left = transformExpression(state, node.left);
   const right = transformExpression(state, node.right);
-  if (!isValidLiteral(left) || !isValidLiteral(right))
+  if (!f.is.validLiteral(left) || !f.is.validLiteral(right))
     return state.transformChildren(node);
 
   if (f.is.bool(left) && f.is.bool(right)) {

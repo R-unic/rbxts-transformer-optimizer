@@ -450,6 +450,9 @@ export namespace f {
 
   export namespace is {
     /// Expressions
+    export function validLiteral(node: ts.Expression): node is f.ValidFoldedLiteral {
+      return ts.isLiteralExpression(node) || f.is.bool(node);
+    }
 
     export function statement(node?: ts.Node): node is ts.ExpressionStatement {
       return node !== undefined && ts.isExpressionStatement(node);
@@ -509,6 +512,10 @@ export namespace f {
 
     export function postfixUnary(node?: ts.Node): node is ts.PostfixUnaryExpression {
       return node !== undefined && ts.isPostfixUnaryExpression(node);
+    }
+
+    export function prefixUnary(node?: ts.Node): node is ts.PrefixUnaryExpression {
+      return node !== undefined && ts.isPrefixUnaryExpression(node);
     }
 
     export function superExpression(node?: ts.Node): node is ts.SuperExpression {
@@ -602,6 +609,10 @@ export namespace f {
 
     export function file(node?: ts.Node): node is ts.SourceFile {
       return node !== undefined && ts.isSourceFile(node);
+    }
+
+    export function unwrappable(expression: ts.Expression): expression is f.ValidFoldedLiteral | ts.PrefixUnaryExpression {
+      return f.is.validLiteral(expression) || f.is.prefixUnary(expression);
     }
   }
 
