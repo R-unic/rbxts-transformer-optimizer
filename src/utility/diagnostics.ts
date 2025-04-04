@@ -39,10 +39,8 @@ export function relocateDiagnostic<T, A extends unknown[]>(node: ts.Node, cb: (.
 
 export function catchDiagnostic<T>(fallback: T, cb: () => T): T {
   const result = captureDiagnostic(cb);
-
-  if (!result.success) {
+  if (!result.success)
     Diagnostics.addDiagnostic(result.diagnostic);
-  }
 
   return result.value ?? fallback;
 }

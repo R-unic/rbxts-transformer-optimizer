@@ -19,7 +19,7 @@ const ARITHMETIC_OPERATIONS = new Map<ts.SyntaxKind, (a: number, b: number) => n
 export function transformBinaryExpression(state: TransformState, node: ts.BinaryExpression): ts.Expression {
   const left = transformExpression(state, node.left);
   const right = transformExpression(state, node.right);
-  if (!f.is.validLiteral(left) || !f.is.validLiteral(right))
+  if (!f.is.foldableLiteral(left) || !f.is.foldableLiteral(right))
     return state.transformChildren(node);
 
   if (f.is.bool(left) && f.is.bool(right)) {

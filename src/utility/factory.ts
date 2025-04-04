@@ -25,7 +25,7 @@ export namespace f {
   type NodeArray<T extends ts.Node> = ReadonlyArray<T> | ts.NodeArray<T>;
   type ONodeArray<T extends ts.Node> = NodeArray<T> | undefined;
   export type ConvertableExpression = string | number | ts.Expression | Array<ConvertableExpression> | boolean;
-  export type ValidFoldedLiteral = ts.BooleanLiteral | ts.NumericLiteral | ts.StringLiteral;
+  export type FoldableLiteral = ts.BooleanLiteral | ts.NumericLiteral | ts.StringLiteral;
 
   export function toExpression(
     expression: ConvertableExpression,
@@ -74,7 +74,7 @@ export namespace f {
     return identifier("undefined");
   }
 
-  export function literalIntoString(literal: ValidFoldedLiteral): string {
+  export function literalIntoString(literal: FoldableLiteral): string {
     if (is.bool(literal))
       return literal.kind === ts.SyntaxKind.TrueKeyword ? "true" : "false";
 
@@ -450,7 +450,54 @@ export namespace f {
 
   export namespace is {
     /// Expressions
-    export function validLiteral(node: ts.Expression): node is f.ValidFoldedLiteral {
+    export function constExpr(node?: ts.Expression): node is ts.Expression {
+      if (node === undefined)
+        return false;
+      if (nil(node))
+        return true;
+
+      switch (node.kind) {
+        case ts.SyntaxKind.NumericLiteral:
+        case ts.SyntaxKind.StringLiteral:
+        case ts.SyntaxKind.TrueKeyword:
+        case ts.SyntaxKind.FalseKeyword:
+        case ts.SyntaxKind.NullKeyword:
+        case ts.SyntaxKind.BigIntLiteral:
+          return true;
+
+        case ts.SyntaxKind.ParenthesizedExpression:
+          return constExpr((node as ts.ParenthesizedExpression).expression);
+
+        case ts.SyntaxKind.PrefixUnaryExpression: {
+          const expr = node as ts.PrefixUnaryExpression;
+          return constExpr(expr.operand);
+        }
+
+        case ts.SyntaxKind.BinaryExpression: {
+          const expr = node as ts.BinaryExpression;
+          return constExpr(expr.left) && constExpr(expr.right);
+        }
+
+        case ts.SyntaxKind.ConditionalExpression: {
+          const expr = node as ts.ConditionalExpression;
+          return (
+            constExpr(expr.condition) &&
+            constExpr(expr.whenTrue) &&
+            constExpr(expr.whenFalse)
+          );
+        }
+
+        case ts.SyntaxKind.AsExpression:
+        case ts.SyntaxKind.TypeAssertionExpression: {
+          const expr = node as ts.AssertionExpression;
+          return constExpr(expr.expression);
+        }
+      }
+
+      return false;
+    }
+
+    export function foldableLiteral(node: ts.Expression): node is f.FoldableLiteral {
       return ts.isLiteralExpression(node) || f.is.bool(node);
     }
 
@@ -611,8 +658,8 @@ export namespace f {
       return node !== undefined && ts.isSourceFile(node);
     }
 
-    export function unwrappable(expression: ts.Expression): expression is f.ValidFoldedLiteral | ts.PrefixUnaryExpression {
-      return f.is.validLiteral(expression) || f.is.prefixUnary(expression);
+    export function unwrappable(expression: ts.Expression): expression is f.FoldableLiteral | ts.PrefixUnaryExpression {
+      return f.is.foldableLiteral(expression) || f.is.prefixUnary(expression);
     }
   }
 
@@ -719,6 +766,40 @@ export namespace f {
         parameters,
         type,
         Array.isArray(body) ? f.block(body) : body,
+      );
+    }
+
+    export function variableDeclaration(
+      node: ts.VariableDeclaration,
+      name: string | ts.BindingName = node.name,
+      type = node.type,
+      initializer = node.initializer
+    ): ts.VariableDeclaration {
+      return factory.updateVariableDeclaration(
+        node,
+        typeof name === "string" ? identifier(name) : name,
+        node.exclamationToken,
+        type,
+        initializer
+      );
+    }
+
+    export function variableDeclarationList(
+      node: ts.VariableDeclarationList,
+      declarations: ONodeArray<ts.VariableDeclaration>
+    ): ts.VariableDeclarationList {
+      return factory.updateVariableDeclarationList(node, declarations ?? []);
+    }
+
+    export function variableStatement(
+      node: ts.VariableStatement,
+      declarationList: ts.VariableDeclarationList,
+      modifiers: ONodeArray<ts.ModifierLike> = node.modifiers
+    ): ts.VariableStatement {
+      return factory.updateVariableStatement(
+        node,
+        modifiers?.length ? modifiers : undefined,
+        declarationList
       );
     }
 

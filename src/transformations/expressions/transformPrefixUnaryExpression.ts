@@ -11,7 +11,7 @@ const ARITHMETIC_OPERATIONS = new Map<ts.SyntaxKind, (n: number) => number>([
 export function transformPrefixUnaryExpression(state: TransformState, node: ts.PrefixUnaryExpression): ts.Expression {
   const operand = transformExpression(state, node.operand);
 
-  if (!f.is.validLiteral(operand))
+  if (!f.is.foldableLiteral(operand))
     return state.transformChildren(node);
 
   if (f.is.bool(operand)) {
