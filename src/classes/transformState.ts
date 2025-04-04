@@ -10,12 +10,12 @@ export interface TransformerConfig {
 }
 
 export class TransformState {
-  public factory: ts.NodeFactory;
+  public readonly factory: ts.NodeFactory;
 
-  constructor(
-    public program: ts.Program,
-    public context: ts.TransformationContext,
-    public config: TransformerConfig,
+  public constructor(
+    public readonly program: ts.Program,
+    public readonly context: ts.TransformationContext,
+    public readonly config: TransformerConfig,
   ) {
     this.factory = context.factory;
   }
